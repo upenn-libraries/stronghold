@@ -13,10 +13,6 @@ module Stronghold
       @vault = ENV["GLACIER_VAULT"]
     end
 
-    def inspect
-      "#<#{self.class.name} #{ivars.join(', ')}>"
-    end
-
   end
 
 end
