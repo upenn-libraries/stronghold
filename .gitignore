@@ -12,3 +12,6 @@
 
 # Rubymine
 .idea
+
+# Example rb file
+example.rb
