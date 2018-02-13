@@ -30,20 +30,18 @@ module Stronghold
       return vault
     end
 
-    def create_backup(vault_id, glob_expression)
+    def create_backup(vault_id, file_path)
       vault = find_vault(vault_id)
       backup_ids = {}
-      Dir.glob(glob_expression).each do |entry|
-        file = File.new(entry)
-        description = entry
-        archive_id = create_archive(vault, file, description)
-        backup_ids[description] = archive_id
-      end
+      file = File.new(file_path)
+      description = file_path
+      archive_id = create_archive(vault, file, description)
+      backup_ids[description] = archive_id
       return backup_ids
     end
 
     def get_inventory(vault)
-      job_ids = vault.jobs.find_all{|i| i.action == 'InventoryRetrieval' && i.status_code == 'InProgress' }
+      job_ids = select_jobs(vault, 'InventoryRetrieval', 'InProgress')
       return job_ids unless job_ids.empty?
       job_ids = vault.jobs.create :type => Fog::AWS::Glacier::Job::INVENTORY
       return [job_ids]
