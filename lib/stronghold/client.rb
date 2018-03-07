@@ -30,11 +30,11 @@ module Stronghold
       return vault
     end
 
-    def create_backup(vault_id, file_path)
+    def create_backup(vault_id, file_path, archive_description = nil)
       vault = find_vault(vault_id)
       backup_ids = {}
       file = File.new(file_path)
-      description = file_path
+      description = archive_description.nil? ? file_path : "#{archive_description}"
       archive_id = create_archive(vault, file, description)
       backup_ids[description] = archive_id
       return backup_ids
