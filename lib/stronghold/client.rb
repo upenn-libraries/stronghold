@@ -1,30 +1,34 @@
-
-require_relative 'configuration'
 require_relative 'exceptions'
 
 module Stronghold
   class Client
 
-    def config
-      @config ||= Configuration.new
-    end
-
-    def configure
-      yield config
-    end
-
     attr_reader :glacier_access_key
     attr_reader :glacier_secret_key
     attr_reader :data_center
 
-    def initialize(opts = {})
-      @glacier_access_key = opts[:glacier_access_key] || config.glacier_access_key
-      @glacier_secret_key = opts[:glacier_secret_key] || config.glacier_secret_key
-      @data_center = opts[:data_center] || config.data_center
+    attr_reader :scheme
+    attr_reader :host
+    attr_reader :port
+
+    def initialize(opts = {}, mock = false)
+      if mock
+        @glacier_access_key = opts[:glacier_access_key]
+        @glacier_secret_key = opts[:glacier_secret_key]
+        @data_center = opts[:data_center]
+        @scheme = opts[:scheme]
+        @host = opts[:host]
+        @port = opts[:port]
+      else
+        @glacier_access_key = opts[:glacier_access_key] || ENV['GLACIER_ACCESS_KEY']
+        @glacier_secret_key = opts[:glacier_secret_key] || ENV['GLACIER_SECRET_KEY']
+        @data_center = opts[:data_center] || ENV['GLACIER_DATA_CENTER']
+        raise Exceptions::MissingGlacierCredentialsError, "Missing Glacier credentials" if [@glacier_access_key, @glacier_secret_key, @data_center].any?{ |a| a.nil? }
+      end
     end
 
     def find_vault(vault_id)
-      connection = connect_client(self.config)
+      connection = connect_client
       vault = connection.vaults.get(vault_id)
       raise Exceptions::VaultNotFoundError, "Vault with vault id #{vault_id} not found" if vault.nil?
       return vault
@@ -41,14 +45,14 @@ module Stronghold
     end
 
     def call_inventory(vault)
-      job_ids = select_jobs(vault, {:action => 'InventoryRetrieval', :status_code => %w[InProgress Succeeded]}).map(&:id)
+      job_ids = select_jobs(vault, {:action => 'InventoryRetrieval', :status_code => %w[InProgress Succeeded Complete]}).map(&:id)
       return job_ids unless job_ids.empty?
       job_ids = vault.jobs.create :type => Fog::AWS::Glacier::Job::INVENTORY
       return [job_ids]
     end
 
     def call_archive(vault, archive_id)
-      job_ids = select_jobs(vault, {:action => 'ArchiveRetrieval', :status_code => %w[InProgress Succeeded], :archive_id => archive_id}).map(&:id)
+      job_ids = select_jobs(vault, {:action => 'ArchiveRetrieval', :status_code => %w[InProgress Succeeded Complete], :archive_id => archive_id}).map(&:id)
       return job_ids unless job_ids.empty?
       job_ids = vault.jobs.create(:type => Fog::AWS::Glacier::Job::ARCHIVE, :archive_id => archive_id)
       return [job_ids]
@@ -97,11 +101,14 @@ module Stronghold
 
     private
 
-    def connect_client(attributes)
-      attributes = { :aws_access_key_id => attributes.glacier_access_key,
-                     :aws_secret_access_key => attributes.glacier_secret_key,
-                     :region => attributes.data_center }
-
+    def connect_client
+      attributes = { :aws_access_key_id => self.glacier_access_key,
+                     :aws_secret_access_key => self.glacier_secret_key,
+                     :region => self.data_center,
+                     :scheme => self.scheme,
+                     :port => self.port,
+                     :host => self.host
+      }
       return Fog::AWS::Glacier.new(attributes)
     end
 
