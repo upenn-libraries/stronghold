@@ -32,7 +32,7 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Testing
 
-Note: The `aws-fog` gem does not currently implement `Fog::Mock` for Glacier.  To simulate a Glacier connection for testing, the handy-dandy Sinatra app [icemelt](https://github.com/cbeer/icemelt) is required.  Follow the deployment instructions on the repo's README and have an instance running when running the test suite, otherwises tests involving Glacier actions will fail. 
+Note: The `aws-fog` gem does not currently implement `Fog::Mock` for Glacier.  To simulate a Glacier connection for testing, the handy-dandy Sinatra app [icemelt](https://github.com/upenn-libraries/icemelt) is required.  Follow the deployment instructions on the repo's README and have an instance running when running the test suite, otherwises tests involving Glacier actions will fail. 
 
 ## Contributing
 
