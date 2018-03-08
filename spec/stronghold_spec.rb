@@ -31,12 +31,29 @@ RSpec.describe Stronghold do
     @mock_connection.create_vault('mock_vault')
     client = Stronghold::Client.new(@icemelt_credentials, mock = true)
     vault = client.find_vault('mock_vault')
-    begin
-      client.call_inventory(vault)
-    rescue Excon::Error::InternalServerError
-      expect(client.call_inventory(vault).length).to match(1)
-    end
+    client.call_inventory(vault)
+    expect(client.call_inventory(vault).length).to match(1)
     @mock_connection.delete_vault('mock_vault')
+  end
+
+  it "does not initialize a new archive retrieval job if a matching job exists in Glacier" do
+    @mock_connection.create_vault('mock_vault')
+    client = Stronghold::Client.new(@icemelt_credentials, mock = true)
+    archive_hash = client.create_backup('mock_vault', 'spec/fixtures/source/archive.txt')
+    archive_id = archive_hash['spec/fixtures/source/archive.txt']
+    client.call_archive(client.find_vault('mock_vault'), archive_id)
+    expect(client.call_archive(client.find_vault('mock_vault'), archive_id).length).to match(1)
+    @mock_connection.delete_vault('mock_vault')
+  end
+
+  it "returns information about an available job when queried" do
+    @mock_connection.create_vault('mock_vault')
+    client = Stronghold::Client.new(@icemelt_credentials, mock = true)
+    vault = client.find_vault('mock_vault')
+    client.call_inventory(vault)
+    job_hash = client.lookup_job(vault, vault.jobs.first.id)
+    expect(job_hash[:id]).to match("#{vault.jobs.first.id}")
+    expect(job_hash[:status_code]).to match("InProgress" || "Complete")
   end
 
 end
