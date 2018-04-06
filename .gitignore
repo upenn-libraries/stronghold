@@ -12,3 +12,5 @@
 
 # Rubymine
 .idea
+
+*.gem
