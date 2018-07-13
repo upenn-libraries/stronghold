@@ -10,9 +10,10 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Katherine Lynch"]
   spec.email         = ["katherly@upenn.edu"]
   spec.summary       = %q{The stronghold gem acts as middleware that interacts between 3rd-copy storage and Bulwark}
-  spec.license     = "Apache License 2.0"
+  spec.description   = %q{The stronghold gem acts as middleware that interacts between 3rd-copy storage and Bulwark}
+  spec.license       = "Apache License 2.0"
 
-  spec.files        = Dir["{lib}/**/*.rb", "bin/*", "LICENSE", "*.md"]
+  spec.files         = Dir["{lib}/**/*.rb", "bin/*", "LICENSE", "*.md"]
   spec.bindir        = "exe"
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
