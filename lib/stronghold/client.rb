@@ -107,7 +107,11 @@ module Stronghold
                      :region => self.data_center,
                      :scheme => self.scheme,
                      :port => self.port,
-                     :host => self.host
+                     :host => self.host,
+                     :connection_options => { :write_timeout => 3600,
+                                              :nonblock => false,
+                                              :chunk_size => 4194304
+                     }
       }
       return Fog::AWS::Glacier.new(attributes)
     end
@@ -117,7 +121,7 @@ module Stronghold
       body = "#{body_content}" if body_content.is_a?(String)
       body = body_content.read if body_content.is_a?(File)
       raise 'Invalid body type, please supply a file or strong' if body.nil?
-      archive = vault.archives.create(:body => body, :description => description, :multipart_chunk_size => 1024*1024)
+      archive = vault.archives.create(:body => body, :description => description, :multipart_chunk_size => 4194304)
       archive.save
       return archive.id
     end
