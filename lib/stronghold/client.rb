@@ -37,9 +37,8 @@ module Stronghold
     def create_backup(vault_id, file_path, archive_description = nil)
       vault = find_vault(vault_id)
       backup_ids = {}
-      file = File.new(file_path)
       description = archive_description.nil? ? file_path : "#{archive_description}"
-      archive_id = create_archive(vault, file, description)
+      archive_id = create_archive(vault, file_path, description)
       backup_ids[description] = archive_id
       return backup_ids
     end
@@ -116,12 +115,13 @@ module Stronghold
       return Fog::AWS::Glacier.new(attributes)
     end
 
-    def create_archive(vault, body_content, description)
+    def create_archive(vault, file_path, description)
       body = nil
-      body = "#{body_content}" if body_content.is_a?(String)
-      body = body_content.read if body_content.is_a?(File)
+      body = "#{file_path}" if file_path.is_a?(String)
+      body ||= File.new(file_path)
       raise 'Invalid body type, please supply a file or strong' if body.nil?
       archive = vault.archives.create(:body => body, :description => description, :multipart_chunk_size => 4194304)
+      archive.multipart_chunk_size = 4194304
       archive.save
       return archive.id
     end
