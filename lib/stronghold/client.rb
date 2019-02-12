@@ -10,6 +10,8 @@ module Stronghold
     attr_reader :scheme
     attr_reader :host
     attr_reader :port
+    attr_reader :multipart_chunk_size
+    attr_reader :write_timeout
 
     def initialize(opts = {}, mock = false)
       if mock
@@ -19,10 +21,14 @@ module Stronghold
         @scheme = opts[:scheme]
         @host = opts[:host]
         @port = opts[:port]
+        @multipart_chunk_size = 4194304
+        @write_timeout = 3600
       else
         @glacier_access_key = opts[:glacier_access_key] || ENV['GLACIER_ACCESS_KEY']
         @glacier_secret_key = opts[:glacier_secret_key] || ENV['GLACIER_SECRET_KEY']
         @data_center = opts[:data_center] || ENV['GLACIER_DATA_CENTER']
+        @multipart_chunk_size = opts[:multipart_chunk_size] || 4194304
+        @write_timeout = opts[:write_timeout] || 3600
         raise Exceptions::MissingGlacierCredentialsError, "Missing Glacier credentials" if [@glacier_access_key, @glacier_secret_key, @data_center].any?{ |a| a.nil? }
       end
     end
@@ -107,9 +113,9 @@ module Stronghold
                      :scheme => self.scheme,
                      :port => self.port,
                      :host => self.host,
-                     :connection_options => { :write_timeout => 3600,
+                     :connection_options => { :write_timeout => self.write_timeout,
                                               :nonblock => false,
-                                              :chunk_size => 4194304
+                                              :chunk_size => self.multipart_chunk_size
                      }
       }
       return Fog::AWS::Glacier.new(attributes)
