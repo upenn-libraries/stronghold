@@ -122,10 +122,8 @@ module Stronghold
     end
 
     def create_archive(vault, file_path, description)
-      body = nil
-      body = "#{file_path}" if file_path.is_a?(String)
-      body ||= File.new(file_path)
-      raise 'Invalid body type, please supply a file or strong' if body.nil?
+      raise 'Invalid body type, please supply a file path' if file_path.nil?
+      body = file_path.is_a?(IO) ? file_path : File.new(file_path)
       archive = vault.archives.create(:body => body, :description => description, :multipart_chunk_size => 4194304)
       archive.multipart_chunk_size = 4194304
       archive.save
