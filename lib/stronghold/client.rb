@@ -52,7 +52,8 @@ module Stronghold
     def call_inventory(vault)
       job_ids = select_jobs(vault, {:action => 'InventoryRetrieval', :status_code => %w[InProgress Succeeded Complete]}).map(&:id)
       return job_ids unless job_ids.empty?
-      job_ids = vault.jobs.create :type => Fog::AWS::Glacier::Job::INVENTORY
+      job = vault.jobs.create :type => Fog::AWS::Glacier::Job::INVENTORY
+      job_ids = job.id
       return [job_ids]
     end
 
@@ -66,15 +67,24 @@ module Stronghold
     def get_inventory(vault, job_id)
       job = vault.jobs.get(job_id)
       return nil if job.nil?
-      return job.get_output.body
+      begin
+        body = job.get_output.body
+      rescue Excon::Errors::BadRequest => e
+        raise Exceptions::JobNotReadyError, 'This inventory is not yet available for download' if e.response.body.include?('not currently available for download') && e.response.status == 400
+      end
+      return body
     end
 
     def get_archive(vault, job_id, destination, mode)
       job = vault.jobs.get(job_id)
       return nil if job.nil?
-      raise Exceptions::InvalidIoModeError "Invalid IO mode #{mode} supplied." if %w[r r+ w w+ a a+].include?(mode.downcase) == false
+      raise Exceptions::InvalidIoModeError, "Invalid IO mode #{mode} supplied." if %w[r r+ w w+ a a+].include?(mode.downcase) == false
       File.open(destination, mode) do |f|
-        job.get_output :io => f
+        begin
+          job.get_output :io => f
+        rescue Excon::Errors::BadRequest => e
+          raise Exceptions::JobNotReadyError, 'This archive is not yet available for download' if e.response.body.include?('not currently available for download') && e.response.status == 400
+        end
       end
       return destination
     end
@@ -124,8 +134,8 @@ module Stronghold
     def create_archive(vault, file_path, description)
       raise 'Invalid body type, please supply a file path' if file_path.nil?
       body = file_path.is_a?(IO) ? file_path : File.new(file_path)
-      archive = vault.archives.create(:body => body, :description => description, :multipart_chunk_size => 4194304)
-      archive.multipart_chunk_size = 4194304
+      archive = vault.archives.create(:body => body, :description => description, :multipart_chunk_size => self.multipart_chunk_size)
+      archive.multipart_chunk_size = self.multipart_chunk_size
       archive.save
       return archive.id
     end
