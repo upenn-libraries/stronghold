@@ -9,9 +9,9 @@ Gem::Specification.new do |spec|
   spec.version       = Stronghold::VERSION
   spec.authors       = ["Katherine Lynch"]
   spec.email         = ["katherly@upenn.edu"]
-  spec.summary       = %q{The stronghold gem acts as middleware that interacts between 3rd-copy storage and Bulwark}
-  spec.description   = %q{The stronghold gem acts as middleware that interacts between 3rd-copy storage and Bulwark}
-  spec.license       = "Apache License 2.0"
+  spec.summary       = %q{The stronghold gem acts as middleware that interacts with Amazon Glacier through Fog}
+  spec.description   = %q{The stronghold gem acts as middleware that interacts with Amazon Glacier through Fog}
+  spec.license       = "Apache-2.0"
 
   spec.files         = Dir["{lib}/**/*.rb", "bin/*", "LICENSE", "*.md"]
   spec.bindir        = "exe"
@@ -24,6 +24,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "pry", "~> 0.11.3"
   spec.add_development_dependency "pry-byebug", "~> 3.6"
 
+  spec.add_dependency "pry", "~> 0.11.3"
   spec.add_dependency "fog-aws", "~> 2.0"
 
 end
