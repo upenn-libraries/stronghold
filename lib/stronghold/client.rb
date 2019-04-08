@@ -45,7 +45,7 @@ module Stronghold
       backup_ids = {}
       description = archive_description.nil? ? file_path : "#{archive_description}"
       archive_id = create_archive(vault, file_path, description)
-      backup_ids[description] = archive_id
+      backup_ids[archive_id] = description
       return backup_ids
     end
 
